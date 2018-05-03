@@ -12,10 +12,10 @@ public class FFTTest {
         plot = new JavaPlot();
         
         // Create signal
-        double[] samples = new double[512];
+        double[] samples = new double[60];
         for (int i = 0; i < samples.length; i++){
             double x = ((double)i / samples.length) * (4 * Math.PI);
-            samples[i] = Math.sin(x) + Math.sin(2 * x);
+            samples[i] = Math.sin(x) + Math.sin(20 * x);
         }
         
         // Allocate forwardArray with samples
@@ -34,6 +34,7 @@ public class FFTTest {
             double mag = Math.sqrt(Math.pow(forwardArray[2 * i], 2) + Math.pow(forwardArray[2 * i + 1], 2));
             System.out.println("Index: " + i + " Val: " + mag);
         }
+        
         
         // Perform inverse
         double[] inverseArray = forwardArray.clone();
