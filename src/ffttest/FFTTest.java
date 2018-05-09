@@ -4,18 +4,54 @@ import com.panayotis.gnuplot.JavaPlot;
 import com.panayotis.gnuplot.plot.DataSetPlot;
 import com.panayotis.gnuplot.style.PlotStyle;
 import com.panayotis.gnuplot.style.Style;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import org.jtransforms.fft.DoubleFFT_1D;
 
 public class FFTTest {
     static JavaPlot plot;
     public static void main(String[] args) {
+        // Load the signal
+        
+        String csvFile = "/Users/Jozi/Desktop/cutregion.csv";
+        BufferedReader br = null;
+        String line = "";
+        String cvsSplitBy = ",";
+        
+        ArrayList<Double> signal = new ArrayList<>();
+        try {
+            br = new BufferedReader(new FileReader(csvFile));
+            while ((line = br.readLine()) != null) {
+
+                // use comma as separator
+                String[] data = line.split(cvsSplitBy);
+                signal.add(Double.parseDouble(data[0]));
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        
         plot = new JavaPlot();
         
-        // Create signal
-        double[] samples = new double[512];
+        // Cast it to array
+        double[] samples = new double[(signal.size() * 2) / 8];
         for (int i = 0; i < samples.length; i++){
-            double x = ((double)i / samples.length) * (4 * Math.PI);
-            samples[i] = Math.sin(x) + Math.sin(20 * x) + Math.sin(50 * x);
+            samples[i] = signal.get(i);
         }
         
         // Allocate forwardArray with samples
@@ -29,17 +65,22 @@ public class FFTTest {
         DoubleFFT_1D fft = new DoubleFFT_1D(samples.length);
         fft.complexForward(forwardArray);
         
-        // Print magnitudes
-        for (int i = 0; i < samples.length; i++){
-            double mag = Math.sqrt(Math.pow(forwardArray[2 * i], 2) + Math.pow(forwardArray[2 * i + 1], 2));
-            System.out.println("Index: " + i + " Val: " + mag);
+        double minBin = (0.3 * ((double)forwardArray.length - 2)) / ((double)samples.length / 8);
+        int offset = 2;
+        int maxBins = (forwardArray.length - 2) / 4;
+        for (int i = 0; i < maxBins; i++){
+            if (i < minBin){
+                int reIndex = 2 * i;
+                int imIndex = (2 * i) + 1;
+
+                // Zero the indices
+                forwardArray[offset + reIndex] = 0;
+                forwardArray[offset + imIndex] = 0;
+                forwardArray[forwardArray.length - 1 - reIndex] = 0;
+                forwardArray[forwardArray.length - 1 - imIndex] = 0;
+            }
         }
         
-        // Filter
-        forwardArray[4] = 0.0;
-        forwardArray[5] = 0.0;
-        forwardArray[1021] = 0.0;
-        forwardArray[1020] = 0.0;
         
         // Perform inverse
         double[] inverseArray = forwardArray.clone();
