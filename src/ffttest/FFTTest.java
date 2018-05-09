@@ -49,7 +49,7 @@ public class FFTTest {
         plot = new JavaPlot();
         
         // Cast it to array
-        double[] samples = new double[(signal.size() * 2) / 8];
+        double[] samples = new double[signal.size()];
         for (int i = 0; i < samples.length; i++){
             samples[i] = signal.get(i);
         }
@@ -65,22 +65,32 @@ public class FFTTest {
         DoubleFFT_1D fft = new DoubleFFT_1D(samples.length);
         fft.complexForward(forwardArray);
         
-        double minBin = (0.3 * ((double)forwardArray.length - 2)) / ((double)samples.length / 8);
-        int offset = 2;
-        int maxBins = (forwardArray.length - 2) / 4;
-        for (int i = 0; i < maxBins; i++){
-            if (i < minBin){
+        double minFreq = 0.4;
+        int numBins = (forwardArray.length) / 2;
+        double Fs = 23;
+        
+        double minBin = Math.round((minFreq / Fs) * numBins);
+        int usableBins = (numBins / 2);
+        
+        for (int i = 1; i < usableBins + 1; i++){
+            if (i <= minBin){
                 int reIndex = 2 * i;
                 int imIndex = (2 * i) + 1;
 
                 // Zero the indices
-                forwardArray[offset + reIndex] = 0;
-                forwardArray[offset + imIndex] = 0;
-                forwardArray[forwardArray.length - 1 - reIndex] = 0;
-                forwardArray[forwardArray.length - 1 - imIndex] = 0;
+                forwardArray[reIndex] = 0;
+                forwardArray[imIndex] = 0;
+                forwardArray[forwardArray.length - reIndex + 1] = 0;
+                forwardArray[forwardArray.length - imIndex + 1] = 0;
             }
         }
         
+        for (int i = 0; i < forwardArray.length / 2; i++){
+            System.out.println("Bin " + i + ": " + forwardArray[2 * i] + " " + forwardArray[2 * i + 1]);
+                   
+        }
+        
+        System.out.println(minBin);
         
         // Perform inverse
         double[] inverseArray = forwardArray.clone();
